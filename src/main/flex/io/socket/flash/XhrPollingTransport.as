@@ -6,16 +6,10 @@ package io.socket.flash
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.net.URLLoader;
-	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
-	import flash.net.URLRequestHeader;
-	import flash.net.URLRequestMethod;
-	import flash.net.URLVariables;
 	import flash.utils.Dictionary;
 	
 	import mx.controls.Alert;
-	
-	import org.osmf.utils.URL;
 	
 	public class XhrPollingTransport extends BaseSocketIOTransport
 	{
@@ -26,16 +20,11 @@ package io.socket.flash
 		// References to avoid GC
 		private var _pollingLoader:URLLoader;
 		private var _connectLoader:URLLoader;
-		private var _opendLoaders:Dictionary = new Dictionary();
-		private var _requestHeaders:Array;
+		private var _httpDataSender:HttpDataSender;
 		
 		public function XhrPollingTransport(hostname:String)
 		{
 			super(hostname);
-			_requestHeaders = new Array(
-				new URLRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8"),
-				new URLRequestHeader("Pragma", "no-cache"),
-				new URLRequestHeader("Cache-Control", "no-cache")); 
 		}
 		
 		public override function connect():void
@@ -65,6 +54,7 @@ package io.socket.flash
 			fireDisconnectEvent();
 		}
 		
+		// TODO Add message queue
 		public override function send(message:Object):void
 		{
 			if (!_connected)
@@ -72,7 +62,6 @@ package io.socket.flash
 				// TODO Throw exception
 				return;
 			}
-			
 			var socketIOMessage:String;
 			if (message is String)
 			{
@@ -91,37 +80,17 @@ package io.socket.flash
 		
 		private function sendData(data:String):void
 		{
-			var urlLoader:URLLoader = new URLLoader();
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + _transportType + "/" + _sessionId + "/send");
-			urlRequest.method = URLRequestMethod.POST;
-			var urlVariables:URLVariables = new URLVariables("data=" + data);
-			urlRequest.data = urlVariables;
-			urlRequest.requestHeaders = _requestHeaders;
-			urlLoader.addEventListener(Event.COMPLETE, onSendCompleted);
-			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
-			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
-			_opendLoaders[urlLoader] = urlLoader;
-			urlLoader.load(urlRequest);
+			_httpDataSender.send(data);
 		}
 		
-		private function onSendCompleted(event:Event):void
-		{
-			var urlLoader:URLLoader = event.target as URLLoader;
-			delete _opendLoaders[urlLoader];
-		}
-
 		private function onSendIoError(event:IOErrorEvent):void
 		{
 			Alert.show("onSendIoError");
-			var urlLoader:URLLoader = event.target as URLLoader;
-			delete _opendLoaders[urlLoader];
 		}
 		
 		private function onSendSecurityError(event:SecurityErrorEvent):void
 		{
 			Alert.show("onSendSecurityError");
-			var urlLoader:URLLoader = event.target as URLLoader;
-			delete _opendLoaders[urlLoader];
 		}
 		
 		private function fireDisconnectEvent():void
@@ -214,6 +183,11 @@ package io.socket.flash
 			_sessionId = decode(data)[0];
 			_connected = true;
 			_connectLoader = null;
+
+			_httpDataSender = new HttpDataSender(hostname + "/" + _transportType + "/" + _sessionId + "/send");
+			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
+			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
+				
 			startPolling();
 		}
 	}
