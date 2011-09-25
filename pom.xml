@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>socket-io</groupId>
+    <artifactId>flash-client</artifactId>
+    <version>1.0.0</version>
+    <packaging>swc</packaging>
+
+    <repositories>
+        <repository>
+            <id>flexmojos-repository</id>
+            <url>http://repository.sonatype.org/content/groups/forge/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>codehausSnapshots</id>
+            <name>Codehaus Snapshots</name>
+            <url>http://repository.sonatype.org/content/groups/flexgroup/</url>
+            <layout>default</layout>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <properties>
+        <flex.version>4.1.0.16248</flex.version>
+        <flexmojos.version>3.9</flexmojos.version>
+        <app.version>${project.version}</app.version>
+        <maven.test.skip>true</maven.test.skip>
+    </properties>
+
+    <build>
+        <finalName>socket-io-flash-client</finalName> 
+        <sourceDirectory>src/main/flex</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.sonatype.flexmojos</groupId>
+                <artifactId>flexmojos-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <version>${flexmojos.version}</version>
+                <configuration>
+                    <targetPlayer>10.0.0</targetPlayer>
+                    <debug>true</debug>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.adobe.flex</groupId>
+                        <artifactId>compiler</artifactId>
+                        <version>${flex.version}</version>
+                        <type>pom</type>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.adobe.flex.framework</groupId>
+            <artifactId>flex-framework</artifactId>
+            <version>${flex.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.adobe.flex.framework</groupId>
+            <artifactId>playerglobal</artifactId>
+            <version>${flex.version}</version>
+            <type>swc</type>
+            <scope>external</scope>
+            <classifier>10.0</classifier>
+        </dependency>
+        <dependency>
+            <groupId>com.adobe</groupId>
+            <artifactId>as3corelib</artifactId>
+            <version>1.0</version>
+            <type>swc</type>
+            <scope>external</scope>
+        </dependency>
+    </dependencies>
+</project>
