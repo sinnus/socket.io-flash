@@ -2,6 +2,7 @@ package io.socket.flash
 {
 	import com.adobe.serialization.json.JSON;
 	
+	import flash.display.DisplayObject;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
@@ -21,16 +22,19 @@ package io.socket.flash
 		private var _pollingLoader:URLLoader;
 		private var _connectLoader:URLLoader;
 		private var _httpDataSender:HttpDataSender;
+		private var _displayObject:DisplayObject;
 		
-		public function XhrPollingTransport(hostname:String)
+		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject)
 		{
 			super(hostname);
+			_displayObject = displayObject;
 		}
 		
 		public override function connect():void
 		{
 			if (_connected)
 			{
+				// TODO ADd reconnect
 				return;
 			}
 			var urlLoader:URLLoader = new URLLoader();
@@ -54,12 +58,13 @@ package io.socket.flash
 			fireDisconnectEvent();
 		}
 		
-		// TODO Add message queue
+		private var _messageQueue:Array = [];
+		private var _enterFrame:Boolean = false;
+		
 		public override function send(message:Object):void
 		{
 			if (!_connected)
 			{
-				// TODO Throw exception
 				return;
 			}
 			var socketIOMessage:String;
@@ -71,11 +76,24 @@ package io.socket.flash
 			{
 				var jsonMessage:String = JSON.encode(message);
 				socketIOMessage = encode([jsonMessage], true);
-			} else
-			{
-				return;
 			}
-			sendData(socketIOMessage);		
+			_messageQueue.push(socketIOMessage);
+			if (!_enterFrame)
+			{
+				_displayObject.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+			}
+		}
+		
+		private function onEnterFrame(event:Event):void
+		{
+			_displayObject.removeEventListener(Event.ENTER_FRAME, onEnterFrame);	
+			var resultData:String = "";
+			for each(var data:String in _messageQueue)
+			{
+				resultData = resultData + data;
+			}
+			_messageQueue = [];
+			sendData(resultData);		
 		}
 		
 		private function sendData(data:String):void
@@ -85,7 +103,7 @@ package io.socket.flash
 		
 		private function onSendIoError(event:IOErrorEvent):void
 		{
-			Alert.show("onSendIoError");
+			Alert.show("onSendIoError" + event.text);
 		}
 		
 		private function onSendSecurityError(event:SecurityErrorEvent):void
