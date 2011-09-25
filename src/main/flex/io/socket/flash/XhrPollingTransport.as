@@ -84,12 +84,14 @@ package io.socket.flash
 			if (!_enterFrame)
 			{
 				_displayObject.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+				_enterFrame = true;
 			}
 		}
 		
 		private function onEnterFrame(event:Event):void
 		{
-			_displayObject.removeEventListener(Event.ENTER_FRAME, onEnterFrame);	
+			_displayObject.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+			_enterFrame = false;
 			var resultData:String = "";
 			for each(var data:String in _messageQueue)
 			{
