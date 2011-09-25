@@ -53,6 +53,9 @@ package io.socket.flash
 				return;
 			}
 			_pollingLoader.close();
+			_pollingLoader.removeEventListener(IOErrorEvent.IO_ERROR, onPollingIoError);
+			_pollingLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
+			_pollingLoader.removeEventListener(Event.COMPLETE, onPollingComplete);
 			_pollingLoader = null;
 			_connected = false;
 			fireDisconnectEvent();
@@ -103,12 +106,12 @@ package io.socket.flash
 		
 		private function onSendIoError(event:IOErrorEvent):void
 		{
-			Alert.show("onSendIoError" + event.text);
+			dispatchEvent(event.clone());
 		}
 		
 		private function onSendSecurityError(event:SecurityErrorEvent):void
 		{
-			Alert.show("onSendSecurityError");
+			dispatchEvent(event.clone());
 		}
 		
 		private function fireDisconnectEvent():void
@@ -125,13 +128,15 @@ package io.socket.flash
 		private function onConnectIoErrorEvent(event:IOErrorEvent):void
 		{
 			_connectLoader = null;
-			Alert.show("onConnectIoErrorEvent");
+			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, event.text);
+			dispatchEvent(socketIOErrorEvent);
 		}
 		
 		private function onConnectSecurityError(event:SecurityErrorEvent):void
 		{
 			_connectLoader = null;
-			Alert.show("onConnectSecurityError");
+			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.SECURITY_FAULT, event.text);
+			dispatchEvent(socketIOErrorEvent);
 		}
 		
 		private function startPolling():void
@@ -182,13 +187,13 @@ package io.socket.flash
 			_pollingLoader = null;
 			_connected = false;
 			fireDisconnectEvent();
-			Alert.show("onPollingIoError");
 		}
 		
 		private function onPollingSecurityError(event:SecurityErrorEvent):void
 		{
 			_pollingLoader = null;
-			Alert.show("onPollingSecurityError");
+			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.SECURITY_FAULT, event.text);
+			dispatchEvent(socketIOErrorEvent);
 		}
 		
 		// TODO Add server http result code

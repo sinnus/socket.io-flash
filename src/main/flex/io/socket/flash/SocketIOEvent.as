@@ -7,8 +7,6 @@ package io.socket.flash
 		public static const CONNECT:String = "connect";
 		public static const DISCONNECT:String = "disconnect";
 		public static const MESSAGE:String = "message";
-		public static const IO_ERROR:String = "ioError";
-		public static const SECURITY_ERROR:String = "securityError";
 		
 		private var _message:Object;
 		
