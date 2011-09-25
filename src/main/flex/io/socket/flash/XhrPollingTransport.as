@@ -8,21 +8,17 @@ package io.socket.flash
 	import flash.events.SecurityErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
-	import flash.utils.Dictionary;
-	
-	import mx.controls.Alert;
 	
 	public class XhrPollingTransport extends BaseSocketIOTransport
 	{
 		private var _transportType:String = "xhr-polling";
 		private var _sessionId:String;
 		private var _connected:Boolean;
-		private static var _urlLoaders:Dictionary = new Dictionary();
+		private var _displayObject:DisplayObject;
 		// References to avoid GC
 		private var _pollingLoader:URLLoader;
 		private var _connectLoader:URLLoader;
 		private var _httpDataSender:HttpDataSender;
-		private var _displayObject:DisplayObject;
 		
 		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject)
 		{
