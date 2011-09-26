@@ -11,7 +11,7 @@ package io.socket.flash
 	
 	public class XhrPollingTransport extends BaseSocketIOTransport
 	{
-		private var _transportType:String = "xhr-polling";
+		public static var TRANSPORT_TYPE:String = "xhr-polling";
 		private var _sessionId:String;
 		private var _connected:Boolean;
 		private var _displayObject:DisplayObject;
@@ -34,7 +34,7 @@ package io.socket.flash
 				return;
 			}
 			var urlLoader:URLLoader = new URLLoader();
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + _transportType + "//" + currentMills());
+			var urlRequest:URLRequest = new URLRequest(hostname + "/" + TRANSPORT_TYPE + "//" + currentMills());
 			urlLoader.addEventListener(Event.COMPLETE, onConnectedComplete);
 			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onConnectIoErrorEvent);
 			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onConnectSecurityError);
@@ -140,7 +140,7 @@ package io.socket.flash
 		private function startPolling():void
 		{
 			var urlLoader:URLLoader = new URLLoader();
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + _transportType + "/" + _sessionId + "/" + currentMills());
+			var urlRequest:URLRequest = new URLRequest(hostname + "/" + TRANSPORT_TYPE + "/" + _sessionId + "/" + currentMills());
 			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onPollingIoError);
 			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
 			urlLoader.addEventListener(Event.COMPLETE, onPollingComplete);
@@ -205,7 +205,7 @@ package io.socket.flash
 			_connected = true;
 			_connectLoader = null;
 
-			_httpDataSender = new HttpDataSender(hostname + "/" + _transportType + "/" + _sessionId + "/send");
+			_httpDataSender = new HttpDataSender(hostname + "/" + TRANSPORT_TYPE + "/" + _sessionId + "/send");
 			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
 			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
 				
