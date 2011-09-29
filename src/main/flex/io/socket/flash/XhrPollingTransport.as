@@ -22,7 +22,7 @@ package io.socket.flash
 		
 		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject)
 		{
-			super(hostname);
+			super("http://" + hostname);
 			_displayObject = displayObject;
 		}
 		
@@ -121,12 +121,6 @@ package io.socket.flash
 			disconnect();
 		}
 		
-		private function fireDisconnectEvent():void
-		{
-			var disconnectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.DISCONNECT);
-			dispatchEvent(disconnectEvent);
-		}
-		
 		private function currentMills():Number
 		{
 			return (new Date()).time;
@@ -162,31 +156,8 @@ package io.socket.flash
 			var urlLoader:URLLoader = event.target as URLLoader;
 			var data:String = urlLoader.data;
 			var messages:Array = decode(data);
-			for each (var message:String in messages)
-			{
-				if (message.substr(0, 3) == '~h~')
-				{
-					// Skip hearbeat because of long polling
-				}
-				else if (message.substr(0, 3) == '~j~')
-				{
-					var json:String = message.substring(3,message.length);
-					var jsonObject:Object = JSON.decode(json);
-					fireMessageEvent(jsonObject);
-				}
-				else
-				{
-					fireMessageEvent(message);
-				}
-			}
+			processMessages(messages);
 			startPolling();
-		}
-		
-		private function fireMessageEvent(message:Object):void
-		{
-			var messageEvent:SocketIOEvent;
-			messageEvent = new SocketIOEvent(SocketIOEvent.MESSAGE, message);
-			dispatchEvent(messageEvent);
 		}
 		
 		private function onPollingIoError(event:IOErrorEvent):void

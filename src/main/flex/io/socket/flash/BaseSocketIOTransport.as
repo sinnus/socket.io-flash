@@ -1,7 +1,10 @@
 package io.socket.flash
 {
+	import com.adobe.serialization.json.JSON;
+	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.utils.unescapeMultiByte;
 	
 	public class BaseSocketIOTransport extends EventDispatcher implements ISocketIOTransport
 	{
@@ -29,8 +32,46 @@ package io.socket.flash
 		public function disconnect():void
 		{
 		}
+
+		public function processMessages(messages:Array):void
+		{
+			for each (var message:String in messages)
+			{
+				if (message.substr(0, 3) == '~h~')
+				{
+					// Skip hearbeat because of long polling
+				}
+				else if (message.substr(0, 3) == '~j~')
+				{
+					var json:String = message.substring(3,message.length);
+					var jsonObject:Object = JSON.decode(json);
+					fireMessageEvent(jsonObject);
+				}
+				else
+				{
+					fireMessageEvent(message);
+				}
+			}
+		}
 		
-		public function decode(data:String):Array{
+		protected function fireMessageEvent(message:Object):void
+		{
+			var messageEvent:SocketIOEvent;
+			messageEvent = new SocketIOEvent(SocketIOEvent.MESSAGE, message);
+			dispatchEvent(messageEvent);
+		}
+		
+		protected function fireDisconnectEvent():void
+		{
+			var disconnectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.DISCONNECT);
+			dispatchEvent(disconnectEvent);
+		}
+		
+		public function decode(data:String, unescape:Boolean = false):Array{
+			if (unescape)
+			{
+				data = unescapeMultiByte(data);
+			}
 			var messages:Array = [], number:*, n:*;
 			do {
 				if (data.substr(0, 3) !== FRAME)
@@ -45,7 +86,7 @@ package io.socket.flash
 					if (data.substr(i, 1) == n){
 						number += n;
 					} else {
-						data = unescape(data.substr(number.length + FRAME.length));
+						data = data.substr(number.length + FRAME.length);
 						number = Number(number);
 						break;
 					}
