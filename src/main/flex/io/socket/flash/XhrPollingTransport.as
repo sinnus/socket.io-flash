@@ -44,15 +44,18 @@ package io.socket.flash
 		
 		public override function disconnect():void
 		{
-			if (!_connected || !_pollingLoader)
+			if (!_connected)
 			{
 				return;
 			}
-			_pollingLoader.close();
-			_pollingLoader.removeEventListener(IOErrorEvent.IO_ERROR, onPollingIoError);
-			_pollingLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
-			_pollingLoader.removeEventListener(Event.COMPLETE, onPollingComplete);
-			_pollingLoader = null;
+			if (_pollingLoader)
+			{
+				_pollingLoader.close();
+				_pollingLoader.removeEventListener(IOErrorEvent.IO_ERROR, onPollingIoError);
+				_pollingLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
+				_pollingLoader.removeEventListener(Event.COMPLETE, onPollingComplete);
+				_pollingLoader = null;
+			}
 			_connected = false;
 			fireDisconnectEvent();
 		}
@@ -104,12 +107,12 @@ package io.socket.flash
 		
 		private function onSendIoError(event:IOErrorEvent):void
 		{
-			dispatchEvent(event.clone());
+			disconnect();
 		}
 		
 		private function onSendSecurityError(event:SecurityErrorEvent):void
 		{
-			dispatchEvent(event.clone());
+			disconnect();
 		}
 		
 		private function fireDisconnectEvent():void
@@ -157,7 +160,7 @@ package io.socket.flash
 			{
 				if (message.substr(0, 3) == '~h~')
 				{
-					// TODO Heartbeat
+					// Skip hearbeat because of long polling
 				}
 				else if (message.substr(0, 3) == '~j~')
 				{
@@ -194,7 +197,6 @@ package io.socket.flash
 			dispatchEvent(socketIOErrorEvent);
 		}
 		
-		// TODO Add server http result code
 		private function onConnectedComplete(event:Event):void
 		{
 			var urlLoader:URLLoader = event.target as URLLoader;
