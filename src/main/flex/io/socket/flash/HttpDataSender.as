@@ -60,6 +60,9 @@ package io.socket.flash
 			if (_urlLoader)
 			{
 				_messageQueue = [];
+				_urlLoader.removeEventListener(Event.COMPLETE, onSendCompleted);
+				_urlLoader.removeEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
+				_urlLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
 				_urlLoader.close();
 				_urlLoader = null;
 			}

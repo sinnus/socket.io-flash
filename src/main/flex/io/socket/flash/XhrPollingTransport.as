@@ -48,6 +48,12 @@ package io.socket.flash
 			{
 				return;
 			}
+			if (_httpDataSender)
+			{
+				_httpDataSender.close();
+				_httpDataSender = null;
+			}
+			
 			if (_pollingLoader)
 			{
 				_pollingLoader.close();
@@ -185,9 +191,7 @@ package io.socket.flash
 		
 		private function onPollingIoError(event:IOErrorEvent):void
 		{
-			_pollingLoader = null;
-			_connected = false;
-			fireDisconnectEvent();
+			disconnect();
 		}
 		
 		private function onPollingSecurityError(event:SecurityErrorEvent):void
