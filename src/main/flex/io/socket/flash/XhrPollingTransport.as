@@ -177,15 +177,23 @@ package io.socket.flash
 			var urlLoader:URLLoader = event.target as URLLoader;
 			var data:String = urlLoader.data;
 			var connectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.CONNECT);
-			dispatchEvent(connectEvent);
 			_sessionId = decode(data)[0];
-			_connected = true;
+			_connectLoader.close();
 			_connectLoader = null;
+			if (_sessionId == null)
+			{
+				// Invalid request
+				var errorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, "Invalid sessionId request");
+				dispatchEvent(errorEvent);
+				return;
+			}
+			_connected = true;
 
 			_httpDataSender = new HttpDataSender(hostname + "/" + TRANSPORT_TYPE + "/" + _sessionId + "/send");
 			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
 			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
-				
+
+			dispatchEvent(connectEvent);
 			startPolling();
 		}
 	}
