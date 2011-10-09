@@ -140,15 +140,18 @@ package io.socket.flash
 			dispatchEvent(socketIOErrorEvent);
 		}
 		
+		
 		private function startPolling():void
 		{
-			var urlLoader:URLLoader = new URLLoader();
+			if (_pollingLoader == null)
+			{
+				_pollingLoader = new URLLoader();
+				_pollingLoader.addEventListener(IOErrorEvent.IO_ERROR, onPollingIoError);
+				_pollingLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
+				_pollingLoader.addEventListener(Event.COMPLETE, onPollingComplete);
+			}
 			var urlRequest:URLRequest = new URLRequest(hostname + "/" + TRANSPORT_TYPE + "/" + _sessionId + "/" + currentMills());
-			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onPollingIoError);
-			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
-			urlLoader.addEventListener(Event.COMPLETE, onPollingComplete);
-			_pollingLoader = urlLoader;
-			urlLoader.load(urlRequest);
+			_pollingLoader.load(urlRequest);
 		}
 
 		private function onPollingComplete(event:Event):void
