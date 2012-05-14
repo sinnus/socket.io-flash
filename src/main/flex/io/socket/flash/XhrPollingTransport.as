@@ -144,6 +144,10 @@ package io.socket.flash
 		
 		private function startPolling():void
 		{
+			if (!_connected)
+			{
+				return;
+			}
 			if (_pollingLoader == null)
 			{
 				_pollingLoader = new URLLoader();
