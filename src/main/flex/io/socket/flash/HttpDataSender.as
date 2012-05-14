@@ -25,7 +25,7 @@ package io.socket.flash
 		{
 			_sendUrl = sendUrl;
 			_requestHeaders = new Array(
-				new URLRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8"),
+				new URLRequestHeader("Content-Type", "text/plain;charset=UTF-8"),
 				new URLRequestHeader("Pragma", "no-cache"),
 				new URLRequestHeader("Cache-Control", "no-cache")); 
 		}
@@ -48,8 +48,7 @@ package io.socket.flash
 			
 			var urlRequest:URLRequest = new URLRequest(_sendUrl);
 			urlRequest.method = URLRequestMethod.POST;
-			var urlVariables:URLVariables = new URLVariables("data=" + data);
-			urlRequest.data = urlVariables;
+			urlRequest.data = data;
 			urlRequest.requestHeaders = _requestHeaders; 
 			_urlLoader.load(urlRequest);
 			_busy = true;

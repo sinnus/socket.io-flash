@@ -9,8 +9,9 @@ package io.socket.flash
 	public class BaseSocketIOTransport extends EventDispatcher implements ISocketIOTransport
 	{
 		private var _hostname:String;
-		public static const FRAME:String = "~m~";
-		
+		public static const FRAME:String = "\ufffd";
+		public static const SEPARATOR:String = ":";
+
 		public function BaseSocketIOTransport(hostname:String)
 		{
 			_hostname = hostname;
@@ -25,6 +26,11 @@ package io.socket.flash
 		{
 		}
 		
+		protected function sendPacket(packet:Packet):void
+		{
+			
+		}
+		
 		public function connect():void
 		{
 		}
@@ -37,21 +43,55 @@ package io.socket.flash
 		{
 			for each (var message:String in messages)
 			{
-				if (message.substr(0, 3) == '~h~')
+				var type:String = message.charAt(0);
+				var index:int = 1;
+				// Skip messageId
+				for(index++;index < message.length;index++)
 				{
-					// Skip hearbeat because of long polling
+					if (message.charAt(index) == SEPARATOR)
+					{
+						break;
+					}
 				}
-				else if (message.substr(0, 3) == '~j~')
+				// Skip endpoint
+				for(index++;index < message.length;index++)
 				{
-					var json:String = message.substring(3,message.length);
-					var jsonObject:Object = JSON.decode(json);
-					fireMessageEvent(jsonObject);
+					if (message.charAt(index) == SEPARATOR)
+					{
+						break;
+					}
 				}
-				else
+				// Skip separator
+				index++;
+				
+				var data:String = message.substr(index, message.length);
+				switch (type)
 				{
-					fireMessageEvent(message);
+					case Packet.CONNECT_TYPE:
+						fireConnected();
+						break;
+					case Packet.HEARTBEAT_TYPE:
+						fireHeartbeat();
+						break;
+					case Packet.MESSAGE_TYPE:
+						fireMessageEvent(data);
+						break;
+					case Packet.JSON_TYPE:
+						fireMessageEvent(JSON.decode(data));
+						break;
+					default:
 				}
 			}
+		}
+		
+		protected function fireConnected():void
+		{
+			dispatchEvent(new SocketIOEvent(SocketIOEvent.CONNECT));
+		}
+		
+		protected function fireHeartbeat():void
+		{
+			sendPacket(new Packet(Packet.HEARTBEAT_TYPE, null));
 		}
 		
 		protected function fireMessageEvent(message:Object):void
@@ -72,9 +112,14 @@ package io.socket.flash
 			{
 				data = unescapeMultiByte(data);
 			}
+			if (data.substr(0, FRAME.length) !== FRAME)
+			{
+				return [data];				
+			}
+
 			var messages:Array = [], number:*, n:*;
 			do {
-				if (data.substr(0, 3) !== FRAME)
+				if (data.substr(0, FRAME.length) !== FRAME)
 				{
 					return messages;	
 				}
@@ -97,19 +142,40 @@ package io.socket.flash
 			return messages;
 		}
 		
-		public function encode(messages:Array, json:Boolean):String{
+		public function encodePackets(packets:Array):String
+		{
 			var ret:String = "";
-			var message:String;
-			for (var i:int = 0, l:int = messages.length; i < l; i++)
+			if (packets.length == 1)
 			{
-				message = messages[i] === null || messages[i] === undefined ? "" : (messages[i].toString());
-				if (json)
+				ret = encodePacket(packets[0]);
+			}
+			else
+			{
+				for each(var packet:Packet in packets)
 				{
-					message = "~j~" + message;
+					var message:String = encodePacket(packet);
+					if (message != null)
+					{
+						ret += FRAME + message.length + FRAME + message
+					}
 				}
-				ret += FRAME + message.length + FRAME + message;
 			}
 			return ret;
 		};
+		
+		private function encodePacket(packet:Packet):String
+		{
+			switch (packet.type)
+			{
+				case Packet.HEARTBEAT_TYPE:
+					return Packet.HEARTBEAT_TYPE + "::";
+				case Packet.MESSAGE_TYPE:
+					return Packet.MESSAGE_TYPE + ":::" + String(packet.data);
+				case Packet.JSON_TYPE:
+					return Packet.JSON_TYPE + ":::" + JSON.encode(packet.data);
+				default:
+					return "";
+			}
+		}
 	}
 }

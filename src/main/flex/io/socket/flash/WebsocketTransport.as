@@ -123,12 +123,12 @@ package io.socket.flash
 			var socketIOMessage:String;
 			if (message is String)
 			{
-				socketIOMessage = encode([message], false);
+				//socketIOMessage = encodePackets([message], false);
 			}
 			else if (message is Object)
 			{
 				var jsonMessage:String = JSON.encode(message);
-				socketIOMessage = encode([jsonMessage], true);
+				//socketIOMessage = encodePackets([jsonMessage], true);
 			}
 			_webSocket.send(socketIOMessage);
 		}

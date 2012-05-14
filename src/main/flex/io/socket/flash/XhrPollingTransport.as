@@ -12,6 +12,7 @@ package io.socket.flash
 	public class XhrPollingTransport extends BaseSocketIOTransport
 	{
 		public static var TRANSPORT_TYPE:String = "xhr-polling";
+		public static var PROTOCOL_VERSION:String = "1";
 		private var _sessionId:String;
 		private var _connected:Boolean;
 		private var _displayObject:DisplayObject;
@@ -34,7 +35,7 @@ package io.socket.flash
 				return;
 			}
 			var urlLoader:URLLoader = new URLLoader();
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + TRANSPORT_TYPE + "//" + currentMills());
+			var urlRequest:URLRequest = new URLRequest(hostname + "/" + PROTOCOL_VERSION + "/?t=" + currentMills());
 			urlLoader.addEventListener(Event.COMPLETE, onConnectedComplete);
 			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onConnectIoErrorEvent);
 			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onConnectSecurityError);
@@ -66,7 +67,7 @@ package io.socket.flash
 			fireDisconnectEvent();
 		}
 		
-		private var _messageQueue:Array = [];
+		private var _packetsQueue:Array = [];
 		private var _enterFrame:Boolean = false;
 		
 		public override function send(message:Object):void
@@ -75,17 +76,21 @@ package io.socket.flash
 			{
 				return;
 			}
-			var socketIOMessage:String;
+			var packet:Packet;
 			if (message is String)
 			{
-				socketIOMessage = encode([message], false);
+				packet = new Packet(Packet.MESSAGE_TYPE, message);
 			}
 			else if (message is Object)
 			{
-				var jsonMessage:String = JSON.encode(message);
-				socketIOMessage = encode([jsonMessage], true);
+				packet = new Packet(Packet.JSON_TYPE, message);
 			}
-			_messageQueue.push(socketIOMessage);
+			sendPacket(packet);
+		}
+
+		protected override function sendPacket(packet:Packet):void
+		{
+			_packetsQueue.push(packet);
 			if (!_enterFrame)
 			{
 				_displayObject.addEventListener(Event.ENTER_FRAME, onEnterFrame);
@@ -97,12 +102,8 @@ package io.socket.flash
 		{
 			_displayObject.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 			_enterFrame = false;
-			var resultData:String = "";
-			for each(var data:String in _messageQueue)
-			{
-				resultData = resultData + data;
-			}
-			_messageQueue = [];
+			var resultData:String = encodePackets(_packetsQueue);
+			_packetsQueue = [];
 			sendData(resultData);		
 		}
 		
@@ -150,7 +151,7 @@ package io.socket.flash
 				_pollingLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
 				_pollingLoader.addEventListener(Event.COMPLETE, onPollingComplete);
 			}
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + TRANSPORT_TYPE + "/" + _sessionId + "/" + currentMills());
+			var urlRequest:URLRequest = new URLRequest(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId);
 			_pollingLoader.load(urlRequest);
 		}
 
@@ -160,6 +161,13 @@ package io.socket.flash
 			var data:String = urlLoader.data;
 			var messages:Array = decode(data);
 			processMessages(messages);
+			startPolling();
+		}
+		
+		protected override function fireConnected():void
+		{
+			_connected = true;
+			super.fireConnected();
 			startPolling();
 		}
 		
@@ -179,8 +187,9 @@ package io.socket.flash
 		{
 			var urlLoader:URLLoader = event.target as URLLoader;
 			var data:String = urlLoader.data;
-			var connectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.CONNECT);
-			_sessionId = decode(data)[0];
+			var handShake:Array = data.split(":");
+			
+			_sessionId = handShake[0];
 			_connectLoader.close();
 			_connectLoader = null;
 			if (_sessionId == null)
@@ -192,11 +201,10 @@ package io.socket.flash
 			}
 			_connected = true;
 
-			_httpDataSender = new HttpDataSender(hostname + "/" + TRANSPORT_TYPE + "/" + _sessionId + "/send");
+			_httpDataSender = new HttpDataSender(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId);
 			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
 			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
 
-			dispatchEvent(connectEvent);
 			startPolling();
 		}
 	}
