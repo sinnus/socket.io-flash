@@ -82,6 +82,8 @@ package io.socket.flash
 					case Packet.DISCONNECT_TYPE:
 						disconnect();
 						return;
+					case Packet.ERROR_TYPE:
+						disconnect();						
 					default:
 				}
 			}
