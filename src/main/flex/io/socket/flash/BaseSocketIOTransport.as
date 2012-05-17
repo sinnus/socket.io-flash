@@ -4,6 +4,10 @@ package io.socket.flash
 	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.events.IOErrorEvent;
+	import flash.events.SecurityErrorEvent;
+	import flash.net.URLLoader;
+	import flash.net.URLRequest;
 	import flash.utils.unescapeMultiByte;
 	
 	public class BaseSocketIOTransport extends EventDispatcher implements ISocketIOTransport
@@ -11,6 +15,9 @@ package io.socket.flash
 		private var _hostname:String;
 		public static const FRAME:String = "\ufffd";
 		public static const SEPARATOR:String = ":";
+		public static const PROTOCOL_VERSION:String = "1";
+		private var _connectLoader:URLLoader;
+		protected var _sessionId:String;
 
 		public function BaseSocketIOTransport(hostname:String)
 		{
@@ -33,6 +40,56 @@ package io.socket.flash
 		
 		public function connect():void
 		{
+			var urlLoader:URLLoader = new URLLoader();
+			var urlRequest:URLRequest = new URLRequest(hostname + "/" + PROTOCOL_VERSION + "/?t=" + currentMills());
+			urlLoader.addEventListener(Event.COMPLETE, onConnectedComplete);
+			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onConnectIoErrorEvent);
+			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onConnectSecurityError);
+			_connectLoader = urlLoader;
+			urlLoader.load(urlRequest);
+		}
+		
+		private function onConnectedComplete(event:Event):void
+		{
+			var urlLoader:URLLoader = event.target as URLLoader;
+			var data:String = urlLoader.data;
+			var handShake:Array = data.split(":");
+			
+			_sessionId = handShake[0];
+			_connectLoader.close();
+			_connectLoader = null;
+			if (_sessionId == null)
+			{
+				// Invalid request
+				var errorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, "Invalid sessionId request");
+				dispatchEvent(errorEvent);
+				return;
+			}
+			onSessionIdRecevied(_sessionId);
+		}
+
+		protected function onSessionIdRecevied(sessionId:String):void
+		{
+			
+		}
+		
+		private function onConnectSecurityError(event:SecurityErrorEvent):void
+		{
+			_connectLoader = null;
+			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.SECURITY_FAULT, event.text);
+			dispatchEvent(socketIOErrorEvent);
+		}
+		
+		private function onConnectIoErrorEvent(event:IOErrorEvent):void
+		{
+			_connectLoader = null;
+			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, event.text);
+			dispatchEvent(socketIOErrorEvent);
+		}
+		
+		protected function currentMills():Number
+		{
+			return (new Date()).time;
 		}
 		
 		public function disconnect():void

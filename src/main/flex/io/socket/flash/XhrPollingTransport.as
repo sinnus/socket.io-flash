@@ -12,13 +12,10 @@ package io.socket.flash
 	public class XhrPollingTransport extends BaseSocketIOTransport
 	{
 		public static var TRANSPORT_TYPE:String = "xhr-polling";
-		public static var PROTOCOL_VERSION:String = "1";
-		private var _sessionId:String;
 		private var _connected:Boolean;
 		private var _displayObject:DisplayObject;
 		// References to avoid GC
 		private var _pollingLoader:URLLoader;
-		private var _connectLoader:URLLoader;
 		private var _httpDataSender:HttpDataSender;
 		
 		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject)
@@ -34,13 +31,7 @@ package io.socket.flash
 				// TODO ADd reconnect
 				return;
 			}
-			var urlLoader:URLLoader = new URLLoader();
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + PROTOCOL_VERSION + "/?t=" + currentMills());
-			urlLoader.addEventListener(Event.COMPLETE, onConnectedComplete);
-			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onConnectIoErrorEvent);
-			urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onConnectSecurityError);
-			_connectLoader = urlLoader;
-			urlLoader.load(urlRequest);
+			super.connect();
 		}
 		
 		public override function disconnect():void
@@ -90,6 +81,10 @@ package io.socket.flash
 
 		protected override function sendPacket(packet:Packet):void
 		{
+			if (!_connected)
+			{
+				return;
+			}
 			_packetsQueue.push(packet);
 			if (!_enterFrame)
 			{
@@ -121,26 +116,6 @@ package io.socket.flash
 		{
 			disconnect();
 		}
-		
-		private function currentMills():Number
-		{
-			return (new Date()).time;
-		}
-		
-		private function onConnectIoErrorEvent(event:IOErrorEvent):void
-		{
-			_connectLoader = null;
-			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, event.text);
-			dispatchEvent(socketIOErrorEvent);
-		}
-		
-		private function onConnectSecurityError(event:SecurityErrorEvent):void
-		{
-			_connectLoader = null;
-			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.SECURITY_FAULT, event.text);
-			dispatchEvent(socketIOErrorEvent);
-		}
-		
 		
 		private function startPolling():void
 		{
@@ -187,29 +162,13 @@ package io.socket.flash
 			dispatchEvent(socketIOErrorEvent);
 		}
 		
-		private function onConnectedComplete(event:Event):void
+		protected override function onSessionIdRecevied(sessionId:String):void
 		{
-			var urlLoader:URLLoader = event.target as URLLoader;
-			var data:String = urlLoader.data;
-			var handShake:Array = data.split(":");
-			
-			_sessionId = handShake[0];
-			_connectLoader.close();
-			_connectLoader = null;
-			if (_sessionId == null)
-			{
-				// Invalid request
-				var errorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, "Invalid sessionId request");
-				dispatchEvent(errorEvent);
-				return;
-			}
 			_connected = true;
-
 			_httpDataSender = new HttpDataSender(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId);
 			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
 			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
-
 			startPolling();
-		}
+		}		
 	}
 }

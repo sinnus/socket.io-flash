@@ -20,12 +20,13 @@ package io.socket.flash
 		private var _webSocket:WebSocket;
 		private var _origin:String;
 		private var _cookie:String;
-		private var _sessionId:String;
 		private var _status:int = DISCONNECTED;
+		private var _simpeHostname:String;
 		
 		public function WebsocketTransport(hostname:String, displayObject:DisplayObject)
 		{
-			super("ws://" + hostname + "/" + TRANSPORT_TYPE);
+			super("http://" + hostname);
+			_simpeHostname = hostname;
 			_origin = "http://" + hostname + "/";
 			_displayObject = displayObject;
 			if (ExternalInterface.available)
@@ -52,13 +53,19 @@ package io.socket.flash
 			{
 				return;
 			}
-			_webSocket = new WebSocket(0, hostname, [], _origin , null, 0, _cookie, null, this);
+			super.connect();
+		}
+		
+		protected override function onSessionIdRecevied(sessionId:String):void
+		{
+			var wsHostname:String =  "ws://" + _simpeHostname + "/" + PROTOCOL_VERSION + "/" + TRANSPORT_TYPE + "/" + sessionId; 
+			_status = CONNECTING;
+			_webSocket = new WebSocket(0, wsHostname, [], _origin , null, 0, _cookie, null, this);
 			_webSocket.addEventListener(WebSocketEvent.OPEN, onWebSocketOpen);
 			_webSocket.addEventListener(WebSocketEvent.MESSAGE, onWebSocketMessage);
 			_webSocket.addEventListener(WebSocketEvent.CLOSE, onWebSocketClose);
 			_webSocket.addEventListener(WebSocketEvent.ERROR, onWebSocketError);
 			_status = CONNECTING;
-			_isFirstMessage = true;
 		}
 		
 		public override function disconnect():void
@@ -71,6 +78,9 @@ package io.socket.flash
 		
 		private function onWebSocketOpen(event:WebSocketEvent):void
 		{
+			_status = CONNECTED;
+			var connectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.CONNECT);
+			dispatchEvent(connectEvent);
 		}
 
 		private function onWebSocketClose(event:WebSocketEvent):void
@@ -93,8 +103,6 @@ package io.socket.flash
 			dispatchEvent(errorEvent);
 		}
 		
-		private var _isFirstMessage:Boolean = true;
-		
 		private function onWebSocketMessage(event:WebSocketEvent):void
 		{
 			if (_status == DISCONNECTED)
@@ -102,36 +110,37 @@ package io.socket.flash
 				return;
 			}
 			var messages:Array = decode(event.message, true);
-			if (_isFirstMessage)
-			{
-				_isFirstMessage = false;
-				_sessionId = messages.pop();
-				_status = CONNECTED;
-				var connectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.CONNECT);
-				dispatchEvent(connectEvent);
-			}
 			processMessages(messages);
 		}
 		
 		public override function send(message:Object):void
 		{
-			if (_webSocket == null || _status != CONNECTED)
+			if (_status != CONNECTED)
 			{
 				return;
 			}
-			// TODO Remove code duplication like in XhrPollingTransport
-			var socketIOMessage:String;
+			var packet:Packet;
 			if (message is String)
 			{
-				//socketIOMessage = encodePackets([message], false);
+				packet = new Packet(Packet.MESSAGE_TYPE, message);
 			}
 			else if (message is Object)
 			{
-				var jsonMessage:String = JSON.encode(message);
-				//socketIOMessage = encodePackets([jsonMessage], true);
+				packet = new Packet(Packet.JSON_TYPE, message);
 			}
-			_webSocket.send(socketIOMessage);
+			sendPacket(packet);
 		}
+		
+		protected override function sendPacket(packet:Packet):void
+		{
+			if (_status != CONNECTED)
+			{
+				return;
+			}
+			var resultData:String = encodePackets([packet]);
+			_webSocket.send(resultData);
+		}
+
 		
 		public function log(message:String):void
 		{
