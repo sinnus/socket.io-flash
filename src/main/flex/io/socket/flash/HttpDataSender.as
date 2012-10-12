@@ -54,6 +54,16 @@ package io.socket.flash
 			_busy = true;
 		}
 		
+		public function sendImidietly(data:String):void
+		{
+			var urlLoader:URLLoader = new URLLoader();
+			var urlRequest:URLRequest = new URLRequest(_sendUrl);
+			urlRequest.method = URLRequestMethod.POST;
+			urlRequest.data = data;
+			urlRequest.requestHeaders = _requestHeaders; 
+			urlLoader.load(urlRequest);			
+		}
+		
 		public function close():void
 		{
 			if (_urlLoader)

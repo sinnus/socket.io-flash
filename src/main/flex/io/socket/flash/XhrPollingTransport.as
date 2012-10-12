@@ -42,6 +42,7 @@ package io.socket.flash
 			}
 			if (_httpDataSender)
 			{
+				_httpDataSender.sendImidietly("0::");
 				_httpDataSender.close();
 				_httpDataSender = null;
 			}
