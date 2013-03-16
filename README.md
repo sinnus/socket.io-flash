@@ -1,6 +1,6 @@
 # socket.io-flash
 
-Flash library to facilitate communication between Flash applications and Socket.IO(v.0.6) servers.
+Flash library to facilitate communication between Flash applications and Socket.IO(>= v.0.8) servers.
 The library supports the following transports:
 
 - xhr-polling

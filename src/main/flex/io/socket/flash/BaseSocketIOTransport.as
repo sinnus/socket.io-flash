@@ -134,7 +134,7 @@ package io.socket.flash
 						fireMessageEvent(data);
 						break;
 					case Packet.JSON_TYPE:
-						fireMessageEvent(JSON.decode(data));
+						fireMessageEvent(com.adobe.serialization.json.JSON.decode(data));
 						break;
 					case Packet.DISCONNECT_TYPE:
 						disconnect();
@@ -185,7 +185,7 @@ package io.socket.flash
 				{
 					return messages;	
 				}
-				data = data.substr(3);
+				data = data.substr(FRAME.length);
 				number = "", n = "";
 				for (var i:int = 0, l:int = data.length; i < l; i++)
 				{
@@ -234,7 +234,7 @@ package io.socket.flash
 				case Packet.MESSAGE_TYPE:
 					return Packet.MESSAGE_TYPE + ":::" + String(packet.data);
 				case Packet.JSON_TYPE:
-					return Packet.JSON_TYPE + ":::" + JSON.encode(packet.data);
+					return Packet.JSON_TYPE + ":::" + com.adobe.serialization.json.JSON.encode(packet.data);
 				default:
 					return "";
 			}
