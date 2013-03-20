@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>socket-io</groupId>
     <artifactId>flash-client</artifactId>
     <version>1.2.0</version>
@@ -38,7 +38,7 @@
     </properties>
 
     <build>
-        <finalName>socket-io-flash-client</finalName> 
+        <finalName>socket-io-flash-client</finalName>
         <sourceDirectory>src/main/flex</sourceDirectory>
         <plugins>
             <plugin>
@@ -89,7 +89,6 @@
             <artifactId>websocket</artifactId>
             <version>1.0</version>
             <type>swc</type>
-            <scope>internal</scope>
         </dependency>
       </dependencies>
 </project>
