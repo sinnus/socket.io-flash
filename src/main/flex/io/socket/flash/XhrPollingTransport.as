@@ -1,14 +1,14 @@
 package io.socket.flash
 {
 	import com.adobe.serialization.json.JSON;
-	
+
 	import flash.display.DisplayObject;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
-	
+
 	public class XhrPollingTransport extends BaseSocketIOTransport
 	{
 		public static var TRANSPORT_TYPE:String = "xhr-polling";
@@ -17,13 +17,13 @@ package io.socket.flash
 		// References to avoid GC
 		private var _pollingLoader:URLLoader;
 		private var _httpDataSender:HttpDataSender;
-		
+
 		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject)
 		{
 			super("http://" + hostname);
 			_displayObject = displayObject;
 		}
-		
+
 		public override function connect():void
 		{
 			if (_connected)
@@ -33,7 +33,7 @@ package io.socket.flash
 			}
 			super.connect();
 		}
-		
+
 		public override function disconnect():void
 		{
 			if (!_connected)
@@ -46,7 +46,15 @@ package io.socket.flash
 				_httpDataSender.close();
 				_httpDataSender = null;
 			}
-			
+			postDisconnect();
+		}
+
+		private function postDisconnect():void
+		{
+			if (!_connected)
+			{
+				return;
+			}
 			if (_pollingLoader)
 			{
 				_pollingLoader.close();
@@ -58,10 +66,10 @@ package io.socket.flash
 			_connected = false;
 			fireDisconnectEvent();
 		}
-		
+
 		private var _packetsQueue:Array = [];
 		private var _enterFrame:Boolean = false;
-		
+
 		public override function send(message:Object):void
 		{
 			if (!_connected)
@@ -93,31 +101,31 @@ package io.socket.flash
 				_enterFrame = true;
 			}
 		}
-		
+
 		private function onEnterFrame(event:Event):void
 		{
 			_displayObject.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
 			_enterFrame = false;
 			var resultData:String = encodePackets(_packetsQueue);
 			_packetsQueue = [];
-			sendData(resultData);		
+			sendData(resultData);
 		}
-		
+
 		private function sendData(data:String):void
 		{
 			_httpDataSender.send(data);
 		}
-		
+
 		private function onSendIoError(event:IOErrorEvent):void
 		{
-			disconnect();
+			postDisconnect();
 		}
-		
+
 		private function onSendSecurityError(event:SecurityErrorEvent):void
 		{
-			disconnect();
+			postDisconnect();
 		}
-		
+
 		private function startPolling():void
 		{
 			if (!_connected)
@@ -143,26 +151,26 @@ package io.socket.flash
 			processMessages(messages);
 			startPolling();
 		}
-		
+
 		protected override function fireConnected():void
 		{
 			_connected = true;
 			super.fireConnected();
 			startPolling();
 		}
-		
+
 		private function onPollingIoError(event:IOErrorEvent):void
 		{
-			disconnect();
+			postDisconnect();
 		}
-		
+
 		private function onPollingSecurityError(event:SecurityErrorEvent):void
 		{
 			_pollingLoader = null;
 			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.SECURITY_FAULT, event.text);
 			dispatchEvent(socketIOErrorEvent);
 		}
-		
+
 		protected override function onSessionIdRecevied(sessionId:String):void
 		{
 			_connected = true;
@@ -170,6 +178,6 @@ package io.socket.flash
 			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
 			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
 			startPolling();
-		}		
+		}
 	}
 }
