@@ -1,7 +1,7 @@
 package io.socket.flash
 {
 	import com.adobe.serialization.json.JSON;
-	
+
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
@@ -9,7 +9,7 @@ package io.socket.flash
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.utils.unescapeMultiByte;
-	
+
 	public class BaseSocketIOTransport extends EventDispatcher implements ISocketIOTransport
 	{
 		private var _hostname:String;
@@ -23,21 +23,26 @@ package io.socket.flash
 		{
 			_hostname = hostname;
 		}
-		
+
+        public function get sessionId():String
+        {
+            return _sessionId;
+        }
+
 		public function get hostname():String
 		{
 			return _hostname;
 		}
-		
+
 		public function send(message:Object):void
 		{
 		}
-		
+
 		protected function sendPacket(packet:Packet):void
 		{
-			
+
 		}
-		
+
 		public function connect():void
 		{
 			var urlLoader:URLLoader = new URLLoader();
@@ -48,13 +53,13 @@ package io.socket.flash
 			_connectLoader = urlLoader;
 			urlLoader.load(urlRequest);
 		}
-		
+
 		private function onConnectedComplete(event:Event):void
 		{
 			var urlLoader:URLLoader = event.target as URLLoader;
 			var data:String = urlLoader.data;
 			var handShake:Array = data.split(":");
-			
+
 			_sessionId = handShake[0];
 			_connectLoader.close();
 			_connectLoader = null;
@@ -70,28 +75,28 @@ package io.socket.flash
 
 		protected function onSessionIdRecevied(sessionId:String):void
 		{
-			
+
 		}
-		
+
 		private function onConnectSecurityError(event:SecurityErrorEvent):void
 		{
 			_connectLoader = null;
 			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.SECURITY_FAULT, event.text);
 			dispatchEvent(socketIOErrorEvent);
 		}
-		
+
 		private function onConnectIoErrorEvent(event:IOErrorEvent):void
 		{
 			_connectLoader = null;
 			var socketIOErrorEvent:SocketIOErrorEvent = new SocketIOErrorEvent(SocketIOErrorEvent.CONNECTION_FAULT, event.text);
 			dispatchEvent(socketIOErrorEvent);
 		}
-		
+
 		protected function currentMills():Number
 		{
 			return (new Date()).time;
 		}
-		
+
 		public function disconnect():void
 		{
 		}
@@ -120,7 +125,7 @@ package io.socket.flash
 				}
 				// Skip separator
 				index++;
-				
+
 				var data:String = message.substr(index, message.length);
 				switch (type)
 				{
@@ -140,35 +145,35 @@ package io.socket.flash
 						disconnect();
 						return;
 					case Packet.ERROR_TYPE:
-						disconnect();						
+						disconnect();
 					default:
 				}
 			}
 		}
-		
+
 		protected function fireConnected():void
 		{
 			dispatchEvent(new SocketIOEvent(SocketIOEvent.CONNECT));
 		}
-		
+
 		protected function fireHeartbeat():void
 		{
 			sendPacket(new Packet(Packet.HEARTBEAT_TYPE, null));
 		}
-		
+
 		protected function fireMessageEvent(message:Object):void
 		{
 			var messageEvent:SocketIOEvent;
 			messageEvent = new SocketIOEvent(SocketIOEvent.MESSAGE, message);
 			dispatchEvent(messageEvent);
 		}
-		
+
 		protected function fireDisconnectEvent():void
 		{
 			var disconnectEvent:SocketIOEvent = new SocketIOEvent(SocketIOEvent.DISCONNECT);
 			dispatchEvent(disconnectEvent);
 		}
-		
+
 		public function decode(data:String, unescape:Boolean = false):Array{
 			if (unescape)
 			{
@@ -176,14 +181,14 @@ package io.socket.flash
 			}
 			if (data.substr(0, FRAME.length) !== FRAME)
 			{
-				return [data];				
+				return [data];
 			}
 
 			var messages:Array = [], number:*, n:*;
 			do {
 				if (data.substr(0, FRAME.length) !== FRAME)
 				{
-					return messages;	
+					return messages;
 				}
 				data = data.substr(FRAME.length);
 				number = "", n = "";
@@ -203,7 +208,7 @@ package io.socket.flash
 			} while(data !== "");
 			return messages;
 		}
-		
+
 		public function encodePackets(packets:Array):String
 		{
 			var ret:String = "";
@@ -224,7 +229,7 @@ package io.socket.flash
 			}
 			return ret;
 		};
-		
+
 		private function encodePacket(packet:Packet):String
 		{
 			switch (packet.type)

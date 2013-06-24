@@ -5,9 +5,11 @@ package io.socket.flash
 	public interface ISocketIOTransport extends IEventDispatcher
 	{
 		function send(message:Object):void;
-		
+
 		function connect():void;
-		
+
 		function disconnect():void;
+
+        function get sessionId():String;
 	}
 }
