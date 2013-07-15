@@ -18,9 +18,14 @@ package io.socket.flash
 		private var _pollingLoader:URLLoader;
 		private var _httpDataSender:HttpDataSender;
 
-		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject)
+		public function XhrPollingTransport(hostname:String, displayObject:DisplayObject, isSecure:Boolean = false)
 		{
-			super("http://" + hostname);
+            super();
+            if (isSecure) {
+                _hostname = "https://" + hostname;
+            } else {
+                _hostname = "http://" + hostname
+            }
 			_displayObject = displayObject;
 		}
 

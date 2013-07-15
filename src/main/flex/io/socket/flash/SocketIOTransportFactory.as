@@ -6,16 +6,16 @@ package io.socket.flash
 	public class SocketIOTransportFactory implements ISocketIOTransportFactory
 	{
 		private var _transpors:Dictionary = new Dictionary();
-		
+
 		public function SocketIOTransportFactory()
 		{
 			_transpors[XhrPollingTransport.TRANSPORT_TYPE] = XhrPollingTransport;
 			_transpors[WebsocketTransport.TRANSPORT_TYPE] = WebsocketTransport;
 		}
-		
-		public function createSocketIOTransport(transportName:String, hostname:String, displayObject:DisplayObject):ISocketIOTransport	
+
+		public function createSocketIOTransport(transportName:String, hostname:String, displayObject:DisplayObject, isSecure:Boolean = false):ISocketIOTransport
 		{
-			return new _transpors[transportName](hostname, displayObject);
+			return new _transpors[transportName](hostname, displayObject, isSecure);
 		}
 	}
 }

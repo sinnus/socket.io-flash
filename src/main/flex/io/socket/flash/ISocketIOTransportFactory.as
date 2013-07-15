@@ -4,6 +4,6 @@ package io.socket.flash
 
 	public interface ISocketIOTransportFactory
 	{
-		function createSocketIOTransport(transportName:String, hostname:String, displayObject:DisplayObject):ISocketIOTransport;	
+		function createSocketIOTransport(transportName:String, hostname:String, displayObject:DisplayObject, isSecure:Boolean = false):ISocketIOTransport;
 	}
 }

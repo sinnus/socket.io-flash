@@ -12,14 +12,14 @@ package io.socket.flash
 
 	public class BaseSocketIOTransport extends EventDispatcher implements ISocketIOTransport
 	{
-		private var _hostname:String;
+        protected var _hostname:String;
 		public static const FRAME:String = "\ufffd";
 		public static const SEPARATOR:String = ":";
 		public static const PROTOCOL_VERSION:String = "1";
 		private var _connectLoader:URLLoader;
 		protected var _sessionId:String;
 
-		public function BaseSocketIOTransport(hostname:String)
+		public function BaseSocketIOTransport(hostname:String = "")
 		{
 			_hostname = hostname;
 		}
