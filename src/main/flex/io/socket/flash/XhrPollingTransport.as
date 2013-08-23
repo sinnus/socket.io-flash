@@ -144,7 +144,7 @@ package io.socket.flash
 				_pollingLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onPollingSecurityError);
 				_pollingLoader.addEventListener(Event.COMPLETE, onPollingComplete);
 			}
-			var urlRequest:URLRequest = new URLRequest(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId);
+			var urlRequest:URLRequest = new URLRequest(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId + "?ts=" + currentMills());
 			_pollingLoader.load(urlRequest);
 		}
 
@@ -179,7 +179,7 @@ package io.socket.flash
 		protected override function onSessionIdRecevied(sessionId:String):void
 		{
 			_connected = true;
-			_httpDataSender = new HttpDataSender(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId);
+			_httpDataSender = new HttpDataSender(hostname + "/" + PROTOCOL_VERSION + "/" +  TRANSPORT_TYPE + "/" + _sessionId + "?ts=" + currentMills());
 			_httpDataSender.addEventListener(IOErrorEvent.IO_ERROR, onSendIoError);
 			_httpDataSender.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSendSecurityError);
 			startPolling();
